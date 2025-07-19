@@ -18,17 +18,48 @@ const CheckoutPage = () => {
     if (!stripe || !elements) return;
 
     try {
-      // 1. Get user data from session storage
+      // 1. Get combined user and plan data from session storage
       const userData = sessionStorage.getItem('userData');
-      if (!userData) throw new Error('Missing user information');
+      if (!userData) throw new Error('Missing registration information');
       
-      const { name, email, address, phone } = JSON.parse(userData);
+      const {
+        name,
+        email,
+        phone,
+        address,
+        plan: planId,
+        planName,
+        price
+      } = JSON.parse(userData);
 
-      // 2. Submit payment to Stripe with billing details
+      // 2. Submit payment to Stripe
       const { error: submitError } = await elements.submit();
       if (submitError) throw submitError;
 
-      // 3. Confirm payment with billing details
+      // 3. Create membership record
+      const membershipResponse = await fetch('/api/memberships', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: email, // Using email as user ID if you don't have a separate ID
+          name,
+          email,
+          phone,
+          address,
+          planId,
+          planName,
+          price,
+        }),
+      });
+
+      if (!membershipResponse.ok) {
+        const errorData = await membershipResponse.json();
+        throw new Error(errorData.error || 'Failed to create membership');
+      }
+
+      // 4. Confirm payment with Stripe
       const { error } = await stripe.confirmPayment({
         elements,
         confirmParams: {
@@ -41,7 +72,7 @@ const CheckoutPage = () => {
               phone,
               address: {
                 line1: address,
-                country: 'US' // Add appropriate country if needed
+                country: 'US'
               }
             }
           }
@@ -65,10 +96,10 @@ const CheckoutPage = () => {
         options={{
           fields: {
             billingDetails: {
-              name: 'never',  // We'll provide this in confirmPayment
-              email: 'never', // We'll provide this in confirmPayment
-              phone: 'auto',  // Optional: can collect or provide
-              address: 'auto' // Optional: can collect or provide
+              name: 'never',
+              email: 'never',
+              phone: 'auto',
+              address: 'auto'
             }
           }
         }} 

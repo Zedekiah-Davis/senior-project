@@ -57,7 +57,7 @@ export default function SuccessPage() {
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-grow container mx-auto px-4 py-8 flex items-center justify-center">
-        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center">
+        <div className="bg-blue-400 rounded-lg shadow-lg p-8 max-w-md w-full text-center">
           <div className="mb-6">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -77,12 +77,12 @@ export default function SuccessPage() {
           <h1 className="text-2xl font-bold text-gray-800 mb-4">
             Payment Successful!
           </h1>
-          <p className="text-gray-600 mb-6">
+          <p className="text-black-600 mb-6">
             Thank you for your purchase, {userData.name}!
           </p>
           
-          <div className="bg-gray-50 rounded-lg p-4 mb-6">
-            <h2 className="font-semibold text-lg mb-2">Order Details</h2>
+          <div className="bg-white rounded-lg p-4 mb-6">
+            <h2 className="font-semibold text-lg mb-2 text-black">Order Details</h2>
             <p className="text-gray-700">
               <span className="font-medium">Plan:</span> {userData.planName || userData.plan}
             </p>

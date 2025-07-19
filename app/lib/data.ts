@@ -36,3 +36,27 @@ export async function fetchLatestMemberships() {
     throw new Error('Failed to fetch the latest memberships.');
   }
 }
+
+const ITEMS_PER_PAGE = 6;
+export async function fetchMembershipsPages(query: string) {
+  try {
+    const data = await sql`
+      SELECT COUNT(*)
+      FROM memberships
+      WHERE
+        name ILIKE ${`%${query}%`} OR
+        email ILIKE ${`%${query}%`} OR
+        plan_name ILIKE ${`%${query}%`} OR
+        price::text ILIKE ${`%${query}%`} OR
+        start_date::text ILIKE ${`%${query}%`} OR
+        end_date::text ILIKE ${`%${query}%`} OR
+        status ILIKE ${`%${query}%`}
+    `;
+
+    const totalPages = Math.ceil(Number(data[0].count) / ITEMS_PER_PAGE);
+    return totalPages;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch total number of memberships.');
+  }
+}

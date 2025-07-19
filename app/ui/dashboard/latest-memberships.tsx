@@ -31,7 +31,7 @@ export default async function LatestMemberships() {
                   </p>
                 </div>
                 <p className={`text-sm font-medium md:text-base`}>
-                  {membership.price}
+                  ${membership.price}
                 </p>
               </div>
               <div className="flex justify-between text-xs text-black">

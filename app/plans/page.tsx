@@ -15,7 +15,7 @@ const membershipPlans = [
       '1 free fitness class/month',
       'Locker room access'
     ],
-    hoverEffect: ''
+    hoverEffect: 'transform hover:scale-105 transition-transform'
   },
   {
     id: 'silver',
@@ -45,7 +45,7 @@ const membershipPlans = [
       '1-on-1 workout planning session',
       'Priority equipment booking'
     ],
-    hoverEffect: ''
+    hoverEffect: 'transform hover:scale-105 transition-transform'
   }
 ];
 

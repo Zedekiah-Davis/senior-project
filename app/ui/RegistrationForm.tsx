@@ -1,37 +1,55 @@
-// app/ui/registration-form.tsx
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+
+type FormData = {
+  name: string;
+  email: string;
+  address: string;
+  phone: string;
+};
 
 export default function RegistrationForm({
   onSubmit,
   loading = false
 }: {
-  onSubmit: (data: {
-    name: string
-    email: string
-    address: string
-    phone: string
-  }) => void
+  onSubmit: (data: FormData) => void
   loading?: boolean
 }) {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    address: '',
-    phone: '',
-    gender: '',
-    age: ''
-  })
+  const [formData, setFormData] = useState<FormData>(() => {
+    if (typeof window !== 'undefined') {
+      const savedFormData = sessionStorage.getItem('registrationFormData');
+      return savedFormData ? JSON.parse(savedFormData) : {
+        name: '',
+        email: '',
+        address: '',
+        phone: ''
+      };
+    }
+    return {
+      name: '',
+      email: '',
+      address: '',
+      phone: ''
+    };
+  });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
-  }
+  useEffect(() => {
+    sessionStorage.setItem('registrationFormData', JSON.stringify(formData));
+  }, [formData]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev: FormData) => ({ 
+      ...prev, 
+      [name]: value 
+    }));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    onSubmit(formData)
-  }
+    e.preventDefault();
+    sessionStorage.removeItem('registrationFormData');
+    onSubmit(formData);
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 max-w-md mx-auto">

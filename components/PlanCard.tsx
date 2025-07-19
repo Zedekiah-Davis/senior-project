@@ -1,6 +1,7 @@
 // components/PlanCard.tsx
+'use client'; // Add this since we'll use client-side features
 import React from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface PlanCardProps {
   plan: {
@@ -16,6 +17,21 @@ interface PlanCardProps {
 }
 
 export const PlanCard = ({ plan }: PlanCardProps) => {
+  const router = useRouter();
+
+  const handleSelectPlan = () => {
+    // Store the plan data in sessionStorage
+    sessionStorage.setItem('selectedPlan', JSON.stringify({
+      id: plan.id,
+      name: plan.name,
+      price: plan.price,
+      features: plan.features
+    }));
+    
+    // Navigate to the registration form
+    router.push('/registration/form');
+  };
+
   return (
     <div 
       className={`card bg-base-100 flex-1 shadow-lg border-2 ${plan.borderColor} min-w-[300px] max-w-md ${plan.hoverEffect || ''}`}
@@ -32,13 +48,12 @@ export const PlanCard = ({ plan }: PlanCardProps) => {
           ))}
         </ul>
         <div className="card-actions justify-center">
-          <Link 
-          key={plan.id}
-          href={`/registration/form?plan=${plan.id}&amount=${plan.price}`}
-          className="btn btn-primary"
-        >
-          Select {plan.name} (${plan.price}/mo)
-        </Link>
+          <button
+            onClick={handleSelectPlan}
+            className={`btn ${plan.buttonStyle}`}
+          >
+            Select {plan.name} (${plan.price}/mo)
+          </button>
         </div>
       </div>
     </div>

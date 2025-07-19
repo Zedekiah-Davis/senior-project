@@ -34,7 +34,7 @@ export const PlanCard = ({ plan }: PlanCardProps) => {
         <div className="card-actions justify-center">
           <Link 
           key={plan.id}
-          href={`/register/checkout?plan=${plan.id}&amount=${plan.price}`}
+          href={`/registration/form?plan=${plan.id}&amount=${plan.price}`}
           className="btn btn-primary"
         >
           Select {plan.name} (${plan.price}/mo)

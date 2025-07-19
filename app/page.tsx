@@ -23,7 +23,7 @@ export default function Home() {
 
       {/* Centered button */}
         <div className="absolute top-150 inset-0 flex items-center justify-center">
-          <Link href="/registration" className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg shadow-lg transition duration-300 transform hover:scale-105">
+          <Link href="/plans" className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg shadow-lg transition duration-300 transform hover:scale-105">
             View Membership Plans
           </Link>
         </div>

@@ -1,134 +1,93 @@
 'use client';
-import React, { useEffect, useState } from "react";
-import {
-    useStripe,
-    useElements,
-    PaymentElement,
-} from "@stripe/react-stripe-js";
-import convertToSubcurrency from "@/app/lib/convertToSubcurrency";
-import { Button } from "@/app/ui/button";
+import { useStripe, useElements, PaymentElement } from "@stripe/react-stripe-js";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-interface UserData {
-    name: string;
-    email: string;
-    address: string;
-    phone: string;
-    plan: string;
-    price: number;
-    planName?: string;
-}
-
 const CheckoutPage = () => {
-    const stripe = useStripe();
-    const elements = useElements();
-    const router = useRouter();
+  const stripe = useStripe();
+  const elements = useElements();
+  const router = useRouter();
+  const [errorMessage, setErrorMessage] = useState<string>();
+  const [loading, setLoading] = useState(false);
 
-    const [errorMessage, setErrorMessage] = useState<string>();
-    const [clientSecret, setClientSecret] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [userData, setUserData] = useState<UserData | null>(null);
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setLoading(true);
+    setErrorMessage(undefined);
 
-    useEffect(() => {
-        // Retrieve user data from session storage
-        const storedData = sessionStorage.getItem('userData');
-        if (!storedData) {
-            router.push('/registration'); // Redirect if no data
-            return;
-        }
-        setUserData(JSON.parse(storedData));
-    }, [router]);
+    if (!stripe || !elements) return;
 
-    useEffect(() => {
-        if (!userData?.price) return;
+    try {
+      // 1. Get user data from session storage
+      const userData = sessionStorage.getItem('userData');
+      if (!userData) throw new Error('Missing user information');
+      
+      const { name, email, address, phone } = JSON.parse(userData);
 
-        fetch("/api/create-payment-intent", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ 
-                amount: convertToSubcurrency(userData.price),
-                customer_email: userData.email,
-                metadata: {
-                    plan: userData.plan,
-                    name: userData.name
-                }
-            }), 
-        })
-        .then((res) => res.json())
-        .then((data) => setClientSecret(data.clientSecret))
-        .catch((error) => {
-            console.error("Error creating payment intent:", error);
-            setErrorMessage("Failed to initialize payment");
-        });
-    }, [userData]);
+      // 2. Submit payment to Stripe with billing details
+      const { error: submitError } = await elements.submit();
+      if (submitError) throw submitError;
 
-    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        setLoading(true);
+      // 3. Confirm payment with billing details
+      const { error } = await stripe.confirmPayment({
+        elements,
+        confirmParams: {
+          return_url: `${window.location.origin}/registration/success`,
+          receipt_email: email,
+          payment_method_data: {
+            billing_details: {
+              name,
+              email,
+              phone,
+              address: {
+                line1: address,
+                country: 'US' // Add appropriate country if needed
+              }
+            }
+          }
+        },
+      });
 
-        if (!stripe || !elements || !userData) {
-            setLoading(false);
-            return;
-        }
+      if (error) throw error;
 
-        const {error: submitError} = await elements.submit();
-        if (submitError) {
-            setErrorMessage(submitError.message);
-            setLoading(false);
-            return;
-        }
-
-        const { error } = await stripe.confirmPayment({
-            elements,
-            clientSecret,
-            confirmParams: {
-                return_url: `${window.location.origin}/registration/success`,
-                receipt_email: userData.email,
-            },
-        });
-
-        if (error) {
-            setErrorMessage(error.message);
-        }
-        setLoading(false);
-    };
-
-    if (!clientSecret || !stripe || !elements || !userData) {
-        return (
-            <div className="flex items-center justify-center">
-                <div
-                    className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-e-transparent align-[-0.125em] text-surface motion-reduce:animate-[spin_1.5s_linear_infinite] dark:text-white"
-                    role="status"
-                >
-                    <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">
-                        Loading...
-                    </span>
-                </div>
-            </div>
-        );
+    } catch (error) {
+      console.error('Checkout failed:', error);
+      setErrorMessage(
+        error instanceof Error ? error.message : 'Payment processing failed'
+      );
+      setLoading(false);
     }
+  };
 
-    return (
-        <form onSubmit={handleSubmit}>
-            {clientSecret && <PaymentElement />}
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <PaymentElement 
+        options={{
+          fields: {
+            billingDetails: {
+              name: 'never',  // We'll provide this in confirmPayment
+              email: 'never', // We'll provide this in confirmPayment
+              phone: 'auto',  // Optional: can collect or provide
+              address: 'auto' // Optional: can collect or provide
+            }
+          }
+        }} 
+      />
+      
+      {errorMessage && (
+        <div className="p-4 text-red-500 bg-red-50 rounded-md">
+          {errorMessage}
+        </div>
+      )}
 
-            {errorMessage && <div className="text-red-500 mb-4">{errorMessage}</div>}
-
-            <div className="mb-4">
-                <h3 className="font-bold">Order Summary</h3>
-                <p>{userData.planName || userData.plan} Plan: ${userData.price.toFixed(2)}</p>
-            </div>
-
-            <button 
-                disabled={!stripe || loading} 
-                className="btn btn-primary w-full disabled:opacity-50 disabled:animate-pulse"
-            >
-                {!loading ? `Pay $${userData.price.toFixed(2)}` : "Processing..."}
-            </button>
-        </form>
-    );
+      <button
+        disabled={!stripe || loading}
+        className="w-full bg-primary text-white py-3 px-4 rounded-md hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {loading ? 'Processing...' : 'Complete Payment'}
+      </button>
+    </form>
+  );
 };
 
 export default CheckoutPage;

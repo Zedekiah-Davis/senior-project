@@ -89,9 +89,6 @@ export default function SuccessPage() {
             <p className="text-gray-700">
               <span className="font-medium">Amount Paid:</span> ${userData.price.toFixed(2)}
             </p>
-            <p className="text-gray-700 mt-2">
-              A confirmation has been sent to {userData.email}
-            </p>
           </div>
         </div>
       </main>
